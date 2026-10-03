@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: example-voting-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    # Replace with the HTTPS clone URL of this Azure DevOps repository.
+    # Example: https://dev.azure.com/ORG/PROJECT/_git/REPOSITORY
+    repoURL: https://dev.azure.com/YOUR_ORG/YOUR_PROJECT/_git/YOUR_REPOSITORY
+    targetRevision: main
+    path: k8s-specifications
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

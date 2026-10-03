@@ -1,0 +1,39 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - worker/*
+
+pr: none
+
+pool:
+  name: $(agentPool)
+
+variables:
+  dockerRegistryServiceConnection: 'acr-service-connection'
+  imageRepository: 'worker'
+  containerRegistry: 'YOUR_ACR_NAME.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/worker/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+steps:
+- checkout: self
+  persistCredentials: true
+  clean: true
+
+- task: Docker@2
+  displayName: Build and push worker image
+  inputs:
+    command: buildAndPush
+    repository: '$(imageRepository)'
+    dockerfile: '$(dockerfilePath)'
+    containerRegistry: '$(dockerRegistryServiceConnection)'
+    tags: |
+      $(tag)
+
+- bash: |
+    set -Eeuo pipefail
+    ./scripts/update-k8s-manifest.sh worker "$(containerRegistry)/$(imageRepository)" "$(tag)"
+  displayName: Update worker Kubernetes manifest
